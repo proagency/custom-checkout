@@ -569,3 +569,37 @@ input[type=text],input[type=email],input[type=tel]{width:100%;padding:12px;borde
     } catch (e) {}
   });
 });
+
+/* ===== EMBED ENTRY POINT =====
+   Called by the embed (inside the iframe) to render the checkout.
+   It expects:
+     - cfg: the config from the builder (titles, colors, channels, price, webhook urls, etc.)
+     - opts.mount: a CSS selector where to render the form (e.g. "#xilbee-root")
+*/
+window.renderCheckout = function renderCheckout(cfg, opts = {}) {
+  const mountSel = opts.mount || "#xilbee-root";
+  const root = document.querySelector(mountSel);
+  if (!root) return console.error("[checkout] mount point not found:", mountSel);
+
+  // TODO: Insert the same runtime you already use in the srcdoc embed:
+  // - build the form DOM into `root`
+  // - apply cfg (titles, labels, colors, channels, price, payment type)
+  // - validate phone ^9\d{9}$
+  // - on submit: POST cfg + buyer data to cfg.webhookUrl, await JSON, pick payment link, redirect
+  // You already have this code working — move it into functions and call them here.
+
+  // Example stub (replace with your current runtime):
+  root.innerHTML = `
+    <div class="card checkout">
+      <h2>${(cfg.title || "Checkout").replace(/[<>&"]/g, "")}</h2>
+      <p class="subtle">${(cfg.subtitle || "Secure payment • SSL encrypted").replace(/[<>&"]/g, "")}</p>
+      <!-- ... render inputs & channels based on cfg ... -->
+      <button id="cta" class="cta">${(cfg.btnText || "Complete Purchase").replace(/[<>&"]/g, "")}</button>
+      <div id="err" class="err"></div>
+    </div>
+  `;
+
+  // wire up your existing submit handler here...
+  // submit -> fetch(cfg.webhookUrl, { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(payload) })
+  // -> response.json() -> find payment link -> location.href = link
+};
