@@ -181,7 +181,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
   function renderPrice() {
     p.priceWrap.classList.toggle("is-hidden", !ctl.priceEnabled.checked);
-    p.currency.textContent = "₱";
+    p.currency.textContent = "PHP";
     p.amount.textContent = String(ctl.amount.value || "").trim();
     p.intervalSuffix.textContent = intervalSuffix();
     p.priceNote.textContent = ctl.priceNote.value || "";
@@ -309,7 +309,7 @@ document.addEventListener("DOMContentLoaded", () => {
       brand: ctl.brand.value,
       accent: ctl.accent.value,
       priceEnabled: ctl.priceEnabled.checked,
-      currency: "₱",
+      currency: "PHP",
       amount: String(ctl.amount.value || "").trim(),
       priceNote: ctl.priceNote.value,
       channels: getEnabledChannels(),
