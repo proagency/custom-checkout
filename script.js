@@ -341,9 +341,179 @@ document.addEventListener("DOMContentLoaded", () => {
   });
 });
 
-// must exist globally for checkout.html to call
-window.renderCheckout = function renderCheckout(cfg, { mount = '#xilbee-root' } = {}) {
-  // ⬇️ move your existing runtime here (apply cfg, build DOM, validations, submit → webhook → redirect)
-  // document.querySelector(mount).innerHTML = ...
-};
+// ------- minimal embed runtime -------
+(function () {
+  function extractPaymentLink(data){
+    try{
+      const keys = ['payment_url','checkout_url','url','redirect_url','paymentLink','link'];
+      for (const k of keys) if (data && typeof data[k]==='string' && /^https?:\/\//.test(data[k])) return data[k];
+      function dive(o){
+        if (!o || typeof o!=='object') return null;
+        for (const k in o){
+          const v = o[k];
+          if (typeof v==='string' && /^https?:\/\//.test(v) && /(pay|checkout|invoice|link|session|order|redirect)/i.test(k+' '+v)) return v;
+          if (typeof v==='object'){ const f = dive(v); if (f) return f; }
+        }
+        return null;
+      }
+      return dive(data);
+    }catch(_){ return null; }
+  }
+
+  window.renderCheckout = function renderCheckout(cfg, { mount = '#xilbee-root' } = {}) {
+    const root = document.querySelector(mount);
+    if (!root) return console.error('[checkout] mount not found', mount);
+
+    // brand colors
+    document.documentElement.style.setProperty('--brand', cfg.brand || '#111827');
+    document.documentElement.style.setProperty('--accent', cfg.accent || '#f3f4f6');
+
+    const suffix =
+      cfg.payType === 'RECURRING'
+        ? (cfg.interval === 'MONTHLY' ? '/mo' : cfg.interval === 'QUARTERLY' ? '/quarter' : '/yr')
+        : '';
+
+    const priceBlock = cfg.priceEnabled ? `
+      <div class="price-header price">
+        <div class="price-left left"><span>${cfg.currency || '₱'}</span><span>${cfg.amount || ''}</span><span>${suffix}</span></div>
+        ${cfg.priceNote ? `<div class="price-note note">${cfg.priceNote}</div>` : ''}
+      </div>` : '';
+
+    const channelsEW = (cfg.channels?.ews || []).map(v =>
+      `<label class="channel"><input type="radio" name="channel-ew" value="${v}"><span>${v}</span></label>`
+    ).join('') || `<div class="empty">No EWALLETS enabled</div>`;
+
+    const channelsBK = (cfg.channels?.bks || []).map(v =>
+      `<label class="channel"><input type="radio" name="channel-bank" value="${v}"><span>${v}</span></label>`
+    ).join('') || `<div class="empty">No BANK enabled</div>`;
+
+    root.innerHTML = `
+      <div class="card checkout">
+        ${priceBlock}
+        <div class="order">
+          <div class="order-title t">${cfg.orderTitle || ''}</div>
+          ${cfg.orderDesc ? `<div class="order-desc d">${cfg.orderDesc}</div>` : ''}
+        </div>
+
+        <h2>${cfg.title || 'Checkout'}</h2>
+        ${cfg.subtitle ? `<p class="subtle sub">${cfg.subtitle}</p>` : ''}
+
+        <label class="form-field" for="name"><span>${cfg.nameLabel || 'Full Name'}</span>
+          <input id="name" type="text" placeholder="${cfg.namePh || ''}" required pattern=".{2,}">
+        </label>
+
+        <label class="form-field" for="email"><span>${cfg.emailLabel || 'Email'}</span>
+          <input id="email" type="email" placeholder="${cfg.emailPh || ''}" required>
+        </label>
+
+        <label class="form-field" for="phone"><span>${cfg.phoneLabel || 'Phone Number'}</span>
+          <div class="phone-wrap">
+            <span class="prefix">+63</span>
+            <input id="phone" type="tel" inputmode="numeric" placeholder="${cfg.phonePh || '9XXXXXXXXX'}" required pattern="^9\\d{9}$" maxlength="10">
+          </div>
+          <small class="hint">Enter 10 digits, starting with 9 (e.g., 9XXXXXXXXX). No +63 needed.</small>
+        </label>
+        <div id="err" class="err"></div>
+
+        <div class="toggle" role="tablist" aria-label="Payment Channel Type">
+          <button type="button" id="emb-ew" role="tab">EWALLETS</button>
+          <button type="button" id="emb-bk" role="tab">BANK</button>
+        </div>
+
+        <div id="emb-ew-panel" class="channels">${channelsEW}</div>
+        <div id="emb-bk-panel" class="channels hide">${channelsBK}</div>
+
+        <button class="cta" id="submitBtn" type="button">${cfg.btnText || 'Complete Purchase'}</button>
+        <p class="sub" style="text-align:center">🔒 Secure checkout</p>
+      </div>
+    `;
+
+    // toggle logic
+    const tabE = root.querySelector('#emb-ew');
+    const tabB = root.querySelector('#emb-bk');
+    const panelE = root.querySelector('#emb-ew-panel');
+    const panelB = root.querySelector('#emb-bk-panel');
+    function setType(t){
+      const isE = t === 'EWALLETS';
+      tabE.classList.toggle('active', isE);
+      tabB.classList.toggle('active', !isE);
+      panelE.classList.toggle('hide', !isE);
+      panelB.classList.toggle('hide', isE);
+    }
+    tabE.addEventListener('click', () => setType('EWALLETS'));
+    tabB.addEventListener('click', () => setType('BANK'));
+    setType(cfg.defaultType === 'BANK' ? 'BANK' : 'EWALLETS');
+
+    // phone digits only
+    const phone = root.querySelector('#phone');
+    phone.addEventListener('input', () => {
+      phone.value = phone.value.replace(/\D/g,'').slice(0,10);
+    });
+
+    // submit
+    const btn = root.querySelector('#submitBtn');
+    const err = root.querySelector('#err');
+    btn.addEventListener('click', async () => {
+      err.textContent = '';
+      const name = root.querySelector('#name').value.trim();
+      const email = root.querySelector('#email').value.trim();
+      const phoneVal = phone.value.trim();
+      if (!/.{2,}/.test(name)) return err.textContent = 'Please enter your full name.';
+      if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) return err.textContent = 'Please enter a valid email address.';
+      if (!/^9\d{9}$/.test(phoneVal)) return err.textContent = 'Phone: enter 10 digits starting with 9.';
+
+      const isE = !panelE.classList.contains('hide');
+      const sel = (isE ? panelE : panelB).querySelector('input[type=radio]:checked');
+      const channel = { type: isE ? 'EWALLETS' : 'BANK', method: sel ? sel.value : null };
+
+      if (!cfg.webhookUrl) { err.textContent = 'Webhook URL is missing.'; return; }
+
+      const payload = {
+        order: {
+          title: cfg.orderTitle || '',
+          description: cfg.orderDesc || '',
+          paymentType: cfg.payType || 'ONE_TIME',
+          interval: cfg.interval || 'MONTHLY',
+          currency: cfg.currency || '₱',
+          amount: cfg.amount || '',
+          priceNote: cfg.priceNote || '',
+          priceSuffix: cfg.payType === 'RECURRING'
+            ? (cfg.interval === 'MONTHLY' ? '/mo' : cfg.interval === 'QUARTERLY' ? '/quarter' : '/yr')
+            : ''
+        },
+        form: { title: cfg.title || '', subtitle: cfg.subtitle || '' },
+        customer: {
+          name, email,
+          phone: { country:'PH', dial_code:'+63', national: phoneVal, e164: '+63'+phoneVal }
+        },
+        channel,
+        meta: { userAgent: navigator.userAgent, timestamp: new Date().toISOString() }
+      };
+
+      btn.disabled = true; const original = btn.textContent; btn.textContent = 'Processing…';
+      try{
+        const res = await fetch(cfg.webhookUrl, {
+          method:'POST',
+          headers:{'Content-Type':'application/json'},
+          body: JSON.stringify(payload),
+          mode:'cors',
+          keepalive:true
+        });
+        let data = null; try { data = await res.json(); } catch(_){}
+        const link = data && extractPaymentLink(data);
+        if (res.ok && link) { location.href = link; return; }
+        if (!res.ok || !link) {
+          if (cfg.failedUrl) { location.href = cfg.failedUrl; return; }
+          err.textContent = !res.ok ? 'Payment initialization failed.' : 'No payment link returned by webhook.';
+        }
+      } catch(e){
+        if (cfg.failedUrl) { location.href = cfg.failedUrl; return; }
+        err.textContent = 'Network error. Please try again.';
+      } finally {
+        btn.disabled = false; btn.textContent = original;
+      }
+    });
+  };
+})();
+
 
