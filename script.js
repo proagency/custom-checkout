@@ -287,36 +287,60 @@ document.addEventListener("DOMContentLoaded", () => {
     if (validatePreview()) alert("Looks good! (Preview submit)");
   });
 
-  // -----------------------------
-  // Generate Embed (full srcdoc)
-  // -----------------------------
-  ctl.embedBtn.addEventListener("click", () => {
-    const cfg = {
-      title: ctl.title.value,
-      subtitle: ctl.subtitle.value,
-      orderTitle: ctl.orderTitle.value,
-      orderDesc: ctl.orderDesc.value,
-      payType: ctl.payType.value, // ONE_TIME | RECURRING
-      interval: ctl.interval.value, // MONTHLY | QUARTERLY | YEARLY
-      nameLabel: ctl.nameLabel.value,
-      namePh: ctl.namePh.value,
-      emailLabel: ctl.emailLabel.value,
-      emailPh: ctl.emailPh.value,
-      phoneLabel: ctl.phoneLabel.value,
-      phonePh: ctl.phonePh.value,
-      btnText: ctl.btnText.value,
-      defaultType: ctl.channelDefault.value === "BANK" ? "BANK" : "EWALLETS",
-      brand: ctl.brand.value,
-      accent: ctl.accent.value,
-      priceEnabled: ctl.priceEnabled.checked,
-      currency: "PHP",
-      amount: String(ctl.amount.value || "").trim(),
-      priceNote: ctl.priceNote.value,
-      channels: getEnabledChannels(),
-      successUrl: (ctl.successUrl.value || "").trim(), // optional fallback
-      failedUrl: (ctl.failedUrl.value || "").trim(), // optional fallback
-      webhookUrl: (ctl.webhookUrl.value || "").trim(),
-    };
+// === Generate short embed pointing to hosted HTML/CSS/JS ===
+ctl.embedBtn.addEventListener("click", () => {
+  const cfg = {
+    title: ctl.title.value,
+    subtitle: ctl.subtitle.value,
+    orderTitle: ctl.orderTitle.value,
+    orderDesc: ctl.orderDesc.value,
+    payType: ctl.payType.value,           // "ONE_TIME" for MVP
+    interval: ctl.interval.value,         // shown as recurring invoice label if used
+    nameLabel: ctl.nameLabel.value,
+    namePh: ctl.namePh.value,
+    emailLabel: ctl.emailLabel.value,
+    emailPh: ctl.emailPh.value,
+    phoneLabel: ctl.phoneLabel.value,
+    phonePh: ctl.phonePh.value,
+    btnText: ctl.btnText.value,
+    defaultType: ctl.channelDefault.value === "BANK" ? "BANK" : "EWALLETS",
+    brand: ctl.brand.value,
+    accent: ctl.accent.value,
+    priceEnabled: ctl.priceEnabled.checked,
+    currency: "₱",
+    amount: String(ctl.amount.value || "").trim(),
+    priceNote: ctl.priceNote.value,
+    channels: (function(){
+      const ews = ctl.ewChecks.filter(c => c.checked).map(c => c.value);
+      const bks = ctl.bkChecks.filter(c => c.checked).map(c => c.value);
+      return { ews, bks };
+    })(),
+    successUrl: (ctl.successUrl.value || "").trim(),
+    failedUrl: (ctl.failedUrl.value  || "").trim(),
+    webhookUrl: (ctl.webhookUrl.value || "").trim()
+  };
+
+  // Make a URL-safe base64 (supports ₱ etc.)
+  const b64 = btoa(unescape(encodeURIComponent(JSON.stringify(cfg))));
+  const HOSTED_HTML = "https://proagency.github.io/custom-checkout/checkout.html";
+
+  // Pass config via hash to avoid server logs: #cfg=BASE64
+  const src = `${HOSTED_HTML}#cfg=${b64}`;
+
+  // Fixed height is simplest. If you later want auto-resize, we can add a postMessage handshake.
+  const iframe = `<iframe
+      src="${src}"
+      style="width:100%;max-width:640px;height:760px;border:0;border-radius:14px;overflow:hidden"
+      loading="lazy"
+      referrerpolicy="no-referrer-when-downgrade"
+    ></iframe>`;
+
+  ctl.embedOut.value = iframe;
+  ctl.embedOut.focus();
+  ctl.embedOut.select();
+  try { document.execCommand("copy"); } catch(e) {}
+});
+
 
     const suffix =
       cfg.payType === "RECURRING"
