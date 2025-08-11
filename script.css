@@ -1,5 +1,3 @@
-@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap');
-
 :root{
   --bg:#0f1216;
   --panel:#fff;
@@ -10,60 +8,19 @@
   --accent:#f3f4f6;         /* toggle background */
 }
 
-body {
-  margin: 0;
-  font-family: "Poppins", system-ui, -apple-system, Segoe UI, Roboto, "Helvetica Neue", Arial, "Noto Sans", sans-serif;
-  background: var(--bg);
-  color: #111;
-  overflow: hidden;
+*{box-sizing:border-box}
+html,body{height:100%}
+body{
+  margin:0;
+  font-family:system-ui,-apple-system,Segoe UI,Roboto,"Helvetica Neue",Arial,"Noto Sans";
+  background:var(--bg);
+  color:#111;
 }
 
-/* optional: ensure form controls also use Poppins */
-input, button, select, textarea {
-  font-family: inherit;
-}
-
-/* Make the grid fluid (if you haven't already) */
 .app{
   display:grid;
-  grid-template-columns:minmax(280px, 36%) 1fr;
-  gap:16px;
-  min-height:100vh;
-}
-
-/* IMPORTANT: don't make every column a scroll container */
-.col{ overflow:visible; }
-
-/* Builder should scroll */
-.builder{
+  grid-template-columns:420px 1fr;
   height:100vh;
-  overflow:auto;
-  padding:20px;
-  background:#f7f7fb; /* keep your existing style */
-  border-right:1px solid var(--border);
-}
-
-/* Preview sticks to the top and can scroll if its content overflows */
-.preview{
-  position:sticky;
-  top:0;                 /* stick to top of viewport */
-  align-self:start;      /* required in CSS grid for sticky to behave */
-  height:100vh;          /* fill the viewport height */
-  overflow:auto;         /* allow internal scroll if needed */
-  padding:20px;
-}
-
-/* keep the card nicely centered within the preview column */
-.card.checkout{ margin:0 auto; max-width:600px; }
-
-/* Responsive: stack on small screens and disable sticky */
-@media (max-width:840px){
-  .app{ grid-template-columns:1fr; }
-  .builder, .preview{
-    position:static;
-    height:auto;
-    overflow:visible;
-  }
 }
 
 .col{overflow:auto;padding:20px}
@@ -157,9 +114,66 @@ input, button, select, textarea {
 }
 #p-btn:active{transform:translateY(1px)}
 
+.embed-wrap{ position:relative; }
+#embed-output{ padding-right:46px; } /* room for the icon */
+
+.icon-btn{
+  position:absolute; top:15px; right:8px;
+  display:inline-grid; place-items:center;
+  width:32px; height:32px; border-radius:8px;
+  border:1px solid var(--border); background:#fff; cursor:pointer;
+  box-shadow:0 1px 0 rgba(0,0,0,.03);
+}
+.icon-btn:hover{ transform:translateY(-1px); }
+.icon-btn:active{ transform:translateY(0); }
+.icon-btn .ic{ display:block; fill:#111; }
+.icon-btn .check{ display:none; }              /* show after copy */
+.icon-btn.copied{ background:var(--brand); border-color:var(--brand); }
+.icon-btn.copied .copy{ display:none; }
+.icon-btn.copied .check{ display:block; fill:var(--brand-contrast); }
+
 .guarantee{margin-top:12px;font-size:12px;color:var(--muted);text-align:center}
 
 @media (max-width:960px){
   .app{grid-template-columns:1fr}
   .builder{border-right:none;border-bottom:1px solid var(--border)}
+}
+
+/* === Sticky Preview + Fluid Columns (override) === */
+.app{
+  display: grid;
+  grid-template-columns: minmax(340px, 560px) minmax(320px, 1fr);
+  gap: 24px;
+  height: auto;                 /* was 100vh */
+  align-items: start;
+}
+
+/* stop creating separate scroll areas */
+.col{ overflow: visible; }
+
+/* pin the preview; let it scroll on its own if tall */
+.preview{
+  position: sticky;
+  top: 0;
+  height: 100vh;
+  overflow: auto;
+  padding-top: 16px;
+  display: block;               /* override previous grid centering */
+}
+
+/* keep the card nicely centered horizontally */
+.preview .card.checkout{
+  margin: 0 auto 24px;
+  max-width: 600px;             /* already set, just reaffirming */
+}
+
+/* responsive: stack and disable sticky on small screens */
+@media (max-width: 960px){
+  .app{ grid-template-columns: 1fr; }
+  .preview{
+    position: static;
+    height: auto;
+    overflow: visible;
+    padding-top: 0;
+  }
 }
