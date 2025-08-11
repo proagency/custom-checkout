@@ -1,0 +1,68 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <!-- your hosted CSS -->
+    <link rel="stylesheet" href="https://proagency.github.io/custom-checkout/script.css" />
+  </head>
+  <body>
+    <div id="xilbee-root" style="max-width:640px;margin:20px auto;"></div>
+
+    <!-- your hosted JS (must expose window.renderCheckout(cfg, { mount }) ) -->
+    <script src="https://proagency.github.io/custom-checkout/script.js" defer></script>
+
+    <!-- read config from URL and render -->
+    <script>
+      (function () {
+        function getParamFromHash(name) {
+          const h = location.hash.startsWith("#") ? location.hash.slice(1) : location.hash;
+          if (!h) return null;
+          const params = new URLSearchParams(h);
+          return params.get(name);
+        }
+        function getParamFromSearch(name) {
+          return new URLSearchParams(location.search).get(name);
+        }
+        function decodeB64Json(b64) {
+          try { return JSON.parse(decodeURIComponent(escape(atob(b64)))); } catch (e) { return null; }
+        }
+
+        // Priority: #cfg=<base64>  >  ?cfgurl=<https url returning json>
+        const b64 = getParamFromHash("cfg") || getParamFromSearch("cfg");
+        const cfgUrl = getParamFromSearch("cfgurl");
+
+        function start(cfg){
+          if (!cfg) {
+            document.getElementById("xilbee-root").innerHTML =
+              "<div class='card checkout'><div class='err'>No config provided.</div></div>";
+            return;
+          }
+          if (window.renderCheckout) {
+            window.renderCheckout(cfg, { mount: "#xilbee-root" });
+          } else {
+            // if script.js hasn’t loaded yet, wait a tick
+            var t = setInterval(function(){
+              if (window.renderCheckout) {
+                clearInterval(t);
+                window.renderCheckout(cfg, { mount: "#xilbee-root" });
+              }
+            }, 30);
+            setTimeout(function(){ clearInterval(t); }, 5000);
+          }
+        }
+
+        if (b64) {
+          start(decodeB64Json(b64));
+        } else if (cfgUrl) {
+          fetch(cfgUrl, { credentials: "omit" })
+            .then(r => r.json())
+            .then(start)
+            .catch(() => start(null));
+        } else {
+          start(null);
+        }
+      })();
+    </script>
+  </body>
+</html>
