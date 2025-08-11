@@ -22,11 +22,35 @@ input, button, select, textarea {
   font-family: inherit;
 }
 
+/* Fluid 2-col: builder (left) & preview (right) */
 .app{
   display:grid;
-  grid-template-columns:420px 1fr;
-  height:100vh;
+  grid-template-columns: minmax(280px, 36%) 1fr; /* fluid left column */
+  gap:16px;
+  min-height:100vh;
 }
+
+/* let preview scroll naturally instead of forced centering */
+.preview{
+  display:block;
+  padding:20px;
+}
+
+/* keep card centered but not forced grid-centering */
+.card.checkout{
+  margin:0 auto;
+}
+
+/* medium screens: give builder a bit more space */
+@media (max-width:1024px){
+  .app{ grid-template-columns: minmax(260px, 42%) 1fr; }
+}
+
+/* small screens: stack */
+@media (max-width:840px){
+  .app{ grid-template-columns: 1fr; }
+}
+
 
 .col{overflow:auto;padding:20px}
 
