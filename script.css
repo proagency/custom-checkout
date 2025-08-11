@@ -1,0 +1,122 @@
+:root{
+  --bg:#0f1216;
+  --panel:#fff;
+  --muted:#6b7280;
+  --border:#e5e7eb;
+  --brand:#111827;          /* primary brand (toggle active + CTA) */
+  --brand-contrast:#fff;
+  --accent:#f3f4f6;         /* toggle background */
+}
+
+*{box-sizing:border-box}
+html,body{height:100%}
+body{
+  margin:0;
+  font-family:system-ui,-apple-system,Segoe UI,Roboto,"Helvetica Neue",Arial,"Noto Sans";
+  background:var(--bg);
+  color:#111;
+}
+
+.app{
+  display:grid;
+  grid-template-columns:420px 1fr;
+  height:100vh;
+}
+
+.col{overflow:auto;padding:20px}
+
+.builder{background:#f7f7fb;border-right:1px solid var(--border)}
+.builder header h1{margin:0 0 6px;font-size:20px}
+.builder header p{margin:0 0 14px;color:var(--muted);font-size:13px}
+
+.group{
+  background:var(--panel);
+  border:1px solid var(--border);
+  border-radius:14px;
+  padding:14px;
+  margin-bottom:14px;
+}
+.group h2{margin:0 0 10px;font-size:14px;color:#111}
+.ctrl{display:grid;gap:6px;font-size:13px;margin-bottom:10px}
+.ctrl input,.ctrl select,.ctrl textarea,#embed-output{
+  padding:10px 12px;border:1px solid var(--border);border-radius:10px;font-size:14px;background:#fff
+}
+.ctrl textarea{resize:vertical}
+.check{display:flex;align-items:center;gap:8px;font-size:14px;margin:6px 0}
+.row{grid-template-columns:1fr auto 120px;align-items:center}
+.grid-2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+
+#gen-embed{
+  display:inline-block;padding:10px 12px;border-radius:10px;border:1px solid var(--border);
+  background:var(--brand);color:var(--brand-contrast);cursor:pointer
+}
+#gen-embed:active{transform:translateY(1px)}
+#embed-output{
+  width:100%;min-height:150px;margin-top:10px;border-style:dashed;resize:vertical;
+  font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;font-size:12px;background:#fafafa
+}
+
+.preview{display:grid;place-items:center}
+.card.checkout{
+  width:100%;max-width:600px;background:var(--panel);border:1px solid var(--border);
+  border-radius:16px;padding:20px;box-shadow:0 10px 30px rgba(0,0,0,.06)
+}
+.card.checkout h2{margin:10px 0 6px}
+.subtle{margin:0 0 16px;color:var(--muted);font-size:13px}
+
+.price-header{
+  display:flex;justify-content:space-between;align-items:baseline;
+  background:var(--accent);border:1px solid var(--border);border-radius:12px;padding:10px 12px
+}
+.price-left{font-size:22px;font-weight:700}
+.price-note{font-size:12px;color:var(--muted);margin-left:12px}
+
+.order{
+  border:1px dashed var(--border);border-radius:12px;padding:12px;margin:12px 0
+}
+.order-title{font-weight:700;margin-bottom:4px}
+.order-desc{color:var(--muted);font-size:13px}
+
+.form-field{display:grid;gap:6px;margin:12px 0;font-size:14px}
+.form-field input{
+  padding:12px;border:1px solid var(--border);border-radius:10px;font-size:15px
+}
+
+.phone-wrap{display:flex;align-items:center;gap:8px}
+.prefix{
+  padding:12px 10px;border:1px solid var(--border);border-radius:10px;background:#fafafa;
+  font-size:14px;white-space:nowrap
+}
+.hint{color:var(--muted);font-size:12px}
+.error{color:#b91c1c;font-size:12px;min-height:16px}
+
+.toggle{
+  display:grid;grid-template-columns:1fr 1fr;gap:6px;background:var(--accent);
+  border:1px solid var(--border);border-radius:12px;padding:6px;margin:12px 0 6px
+}
+.toggle-btn{
+  padding:10px 12px;background:transparent;border:none;border-radius:8px;cursor:pointer;font-weight:600
+}
+.toggle-btn.is-active{background:var(--brand);color:var(--brand-contrast)}
+
+.channels{display:grid;gap:8px;margin-bottom:12px}
+.channel{
+  display:flex;align-items:center;gap:10px;padding:10px 12px;border:1px solid var(--border);border-radius:12px
+}
+.channel input{transform:scale(1.15)}
+.channels .empty{color:var(--muted);font-size:13px}
+
+.is-hidden{display:none}
+
+#p-btn{
+  width:100%;padding:12px 14px;border:none;border-radius:12px;background:var(--brand);
+  color:var(--brand-contrast);font-weight:600;cursor:pointer;margin-top:6px
+}
+#p-btn:active{transform:translateY(1px)}
+
+.guarantee{margin-top:12px;font-size:12px;color:var(--muted);text-align:center}
+
+@media (max-width:960px){
+  .app{grid-template-columns:1fr}
+  .builder{border-right:none;border-bottom:1px solid var(--border)}
+}
