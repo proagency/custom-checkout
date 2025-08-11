@@ -22,35 +22,48 @@ input, button, select, textarea {
   font-family: inherit;
 }
 
-/* Fluid 2-col: builder (left) & preview (right) */
+/* Make the grid fluid (if you haven't already) */
 .app{
   display:grid;
-  grid-template-columns: minmax(280px, 36%) 1fr; /* fluid left column */
+  grid-template-columns:minmax(280px, 36%) 1fr;
   gap:16px;
   min-height:100vh;
 }
 
-/* let preview scroll naturally instead of forced centering */
+/* IMPORTANT: don't make every column a scroll container */
+.col{ overflow:visible; }
+
+/* Builder should scroll */
+.builder{
+  height:100vh;
+  overflow:auto;
+  padding:20px;
+  background:#f7f7fb; /* keep your existing style */
+  border-right:1px solid var(--border);
+}
+
+/* Preview sticks to the top and can scroll if its content overflows */
 .preview{
-  display:block;
+  position:sticky;
+  top:0;                 /* stick to top of viewport */
+  align-self:start;      /* required in CSS grid for sticky to behave */
+  height:100vh;          /* fill the viewport height */
+  overflow:auto;         /* allow internal scroll if needed */
   padding:20px;
 }
 
-/* keep card centered but not forced grid-centering */
-.card.checkout{
-  margin:0 auto;
-}
+/* keep the card nicely centered within the preview column */
+.card.checkout{ margin:0 auto; max-width:600px; }
 
-/* medium screens: give builder a bit more space */
-@media (max-width:1024px){
-  .app{ grid-template-columns: minmax(260px, 42%) 1fr; }
-}
-
-/* small screens: stack */
+/* Responsive: stack on small screens and disable sticky */
 @media (max-width:840px){
-  .app{ grid-template-columns: 1fr; }
+  .app{ grid-template-columns:1fr; }
+  .builder, .preview{
+    position:static;
+    height:auto;
+    overflow:visible;
+  }
 }
-
 
 .col{overflow:auto;padding:20px}
 
