@@ -3,65 +3,55 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <!-- your hosted CSS -->
     <link rel="stylesheet" href="https://proagency.github.io/custom-checkout/script.css" />
+    <style>html,body{margin:0}</style>
   </head>
   <body>
     <div id="xilbee-root" style="max-width:640px;margin:20px auto;"></div>
 
-    <!-- your hosted JS (must expose window.renderCheckout(cfg, { mount }) ) -->
     <script src="https://proagency.github.io/custom-checkout/script.js" defer></script>
 
-    <!-- read config from URL and render -->
     <script>
       (function () {
-        function getParamFromHash(name) {
-          const h = location.hash.startsWith("#") ? location.hash.slice(1) : location.hash;
-          if (!h) return null;
-          const params = new URLSearchParams(h);
-          return params.get(name);
-        }
-        function getParamFromSearch(name) {
-          return new URLSearchParams(location.search).get(name);
+        function getParam(name) {
+          var hash = location.hash && location.hash.startsWith('#') ? location.hash.slice(1) : '';
+          var fromHash = hash ? new URLSearchParams(hash).get(name) : null;
+          var fromSearch = new URLSearchParams(location.search).get(name);
+          return fromHash || fromSearch;
         }
         function decodeB64Json(b64) {
           try { return JSON.parse(decodeURIComponent(escape(atob(b64)))); } catch (e) { return null; }
         }
-
-        // Priority: #cfg=<base64>  >  ?cfgurl=<https url returning json>
-        const b64 = getParamFromHash("cfg") || getParamFromSearch("cfg");
-        const cfgUrl = getParamFromSearch("cfgurl");
-
-        function start(cfg){
+        function start(cfg) {
+          var mount = '#xilbee-root';
           if (!cfg) {
-            document.getElementById("xilbee-root").innerHTML =
+            document.querySelector(mount).innerHTML =
               "<div class='card checkout'><div class='err'>No config provided.</div></div>";
             return;
           }
-          if (window.renderCheckout) {
-            window.renderCheckout(cfg, { mount: "#xilbee-root" });
-          } else {
-            // if script.js hasn’t loaded yet, wait a tick
-            var t = setInterval(function(){
-              if (window.renderCheckout) {
-                clearInterval(t);
-                window.renderCheckout(cfg, { mount: "#xilbee-root" });
-              }
-            }, 30);
-            setTimeout(function(){ clearInterval(t); }, 5000);
+          function run() {
+            if (window.renderCheckout) {
+              window.renderCheckout(cfg, { mount });
+            } else {
+              // wait up to ~5s if script.js is still loading
+              var tries = 0, t = setInterval(function () {
+                if (window.renderCheckout || ++tries > 160) {
+                  clearInterval(t);
+                  window.renderCheckout && window.renderCheckout(cfg, { mount });
+                }
+              }, 30);
+            }
           }
+          if (document.readyState === 'complete') run();
+          else window.addEventListener('load', run);
         }
 
-        if (b64) {
-          start(decodeB64Json(b64));
-        } else if (cfgUrl) {
-          fetch(cfgUrl, { credentials: "omit" })
-            .then(r => r.json())
-            .then(start)
-            .catch(() => start(null));
-        } else {
-          start(null);
-        }
+        var b64 = getParam('cfg');
+        var cfgurl = new URLSearchParams(location.search).get('cfgurl');
+
+        if (b64) start(decodeB64Json(b64));
+        else if (cfgurl) fetch(cfgurl, { credentials: 'omit' }).then(r => r.json()).then(start).catch(() => start(null));
+        else start(null);
       })();
     </script>
   </body>
