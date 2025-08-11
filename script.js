@@ -341,5 +341,9 @@ document.addEventListener("DOMContentLoaded", () => {
   });
 });
 
-// NOTE: the renderCheckout() function belongs in your hosted script.js (the embed runtime).
-// If you accidentally kept a stub here, remove it from CodePen to avoid confusion.
+// must exist globally for checkout.html to call
+window.renderCheckout = function renderCheckout(cfg, { mount = '#xilbee-root' } = {}) {
+  // ⬇️ move your existing runtime here (apply cfg, build DOM, validations, submit → webhook → redirect)
+  // document.querySelector(mount).innerHTML = ...
+};
+
